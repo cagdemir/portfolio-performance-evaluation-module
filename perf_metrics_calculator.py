@@ -105,10 +105,10 @@ def performance_metrics(series_in, market=None, rf=None, target=None, freq='M', 
     risk_return = cagr / (-max_dd)
     
     # Conditional drawdown  
-
-    n = int(np.round((max_dddur_all[max_dddur_all>1].shape[0]*.2)))
-    #conditional_dd = max_dddur_all_cumsum.groupby(max_dddur_all_cumsum).apply(lambda x: max_dd_all[x.index].min()).sort_values().iloc[:n].mean() - 1
-    conditional_dd = 5
+    condition = .2
+    n = int(np.round((max_dddur_all[max_dddur_all>1].shape[0]*condition)))
+    conditional_dd = max_dddur_all_cumsum.groupby(max_dddur_all_cumsum).apply(lambda x: max_dd_all.loc[x.index].min()).sort_values().iloc[:n].mean() - 1
+    #conditional_dd = 5
     # CDD duration
     
     conditional_dd_dur = max_dddur_all.iloc[:n].mean()
@@ -161,7 +161,7 @@ def performance_metrics(series_in, market=None, rf=None, target=None, freq='M', 
                      'Treynor', 'Omega', 'Risk-Return', 'alpha Raw', 'alpha',
                      'beta', 'Max Drawdown', 'Conditional Drawdown (Highest 20%)',
                      'Max Drawdown Duration', 'Conditional Drawdown Duration (Longest 20%)',
-                     'Maximum Single Return', 'Minimum Single Return', 'VaR (5%)', 
+                     'Maximum Single Period Return', 'Minimum Single Period Return', 'VaR (5%)', 
                      'Skewness', 'Kurtosis']
     
     metrics_values = [ret_compounded, ret_excess_compounded, cagr, volatility,
@@ -251,8 +251,10 @@ def performance_metrics(series_in, market=None, rf=None, target=None, freq='M', 
         #-----------------------------------------------------------------------------------------------------
         
         # plotting heat map and annual returns
-        plt.figure()
+        
         if not freq=='Y':
+            
+            plt.figure()
             
             years = idx.year.unique()
             
@@ -260,11 +262,16 @@ def performance_metrics(series_in, market=None, rf=None, target=None, freq='M', 
                 secondary_period = idx.month.unique().sort_values()
             
             elif freq=='W':
-                secondary_period = range(53)
-            
+                
+                secondary_period_end = series_in.groupby(pd.Grouper(freq='A')).apply(lambda x: x.index.week.unique().shape[0]).max()#range(53)
+                secondary_period = range(0,secondary_period_end)
+                
             elif freq=='D':
-                secondary_period = idx.day.unique().sort_values()
-        
+
+                secondary_period_end = max(series_in.groupby(pd.Grouper(freq='A')).apply(lambda x: x.shape[0]).max(),252)#idx.day.unique().sort_values()
+                secondary_period = range(0,secondary_period_end)
+                
+                
             series_grouped = series_in.groupby(series_in.index.year)
         
             ret_perPeriod = pd.concat([series_grouped.get_group(i).reset_index(drop=True) for i in years], axis=1).T
