@@ -2,7 +2,7 @@
 A Python module for calculating and visualizing performance of an investment portfolio
 
 
-### A sample output of the dictionary generated:
+##### A sample output of the dictionary generated:
 
 In[1]: dict_table
 Out[1]: 
